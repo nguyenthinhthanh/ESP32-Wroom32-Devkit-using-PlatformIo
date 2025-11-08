@@ -1,19 +1,28 @@
 #include <Arduino.h>
 
-#define LED 13
+void TaskLEDControl(void *pvParameters) {
+  pinMode(GPIO_NUM_13, OUTPUT); // Initialize LED pin
+  int ledState = 0;
+  while(1) {
+    
+    if (ledState == 0) {
+      digitalWrite(GPIO_NUM_13, HIGH); // Turn ON LED
+    } else {
+      digitalWrite(GPIO_NUM_13, LOW); // Turn OFF LED
+    }
+    ledState = 1 - ledState;
+    vTaskDelay(3000);
+  }
+}
+
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
-  pinMode(LED, OUTPUT);
+  xTaskCreate(TaskLEDControl, "LED Control", 2048, NULL, 2, NULL);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  digitalWrite(LED, HIGH);
-  Serial.println("LED is on");
-  delay(1000);
-  digitalWrite(LED, LOW);
-  Serial.println("LED is off");
+  Serial.println("Hello Custom Board");
   delay(1000);
 }
