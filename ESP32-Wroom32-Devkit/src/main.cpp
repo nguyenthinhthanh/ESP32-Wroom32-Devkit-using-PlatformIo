@@ -1,48 +1,45 @@
-#include <Arduino.h>
-#include <DHT20.h>
+#include "global.h"
 
-void TaskLEDControl(void *pvParameters) {
-  pinMode(GPIO_NUM_13, OUTPUT); // Initialize LED pin
-  int ledState = 0;
-  while(1) {
-    
-    if (ledState == 0) {
-      digitalWrite(GPIO_NUM_13, HIGH); // Turn ON LED
-    } else {
-      digitalWrite(GPIO_NUM_13, LOW); // Turn OFF LED
-    }
-    ledState = 1 - ledState;
-    vTaskDelay(2000);
-  }
-}
+#include "led_blinky.h"
+// #include "neo_blinky.h"
+#include "temp_humi_monitor.h"
+// #include "mainserver.h"
+// #include "tinyml.h"
+#include "coreiot.h"
 
-void TaskTemperature_Humidity(void *pvParameters){
-  DHT20 dht20;
-  Wire.begin(GPIO_NUM_21, GPIO_NUM_22);
-  dht20.begin();
-  while(1){
-    dht20.read();
-    double temperature = dht20.getTemperature();
-    double humidity = dht20.getHumidity();
+// include task
+#include "task_check_info.h"
+#include "task_toogle_boot.h"
+#include "task_wifi.h"
+#include "task_webserver.h"
+#include "task_core_iot.h"
 
-    Serial.print("Temp: "); Serial.print(temperature); Serial.print(" *C ");
-    Serial.print(" Humidity: "); Serial.print(humidity); Serial.print(" %");
-    Serial.println();
-    
-    vTaskDelay(5000);
-  }
-
-}
-
-
-void setup() {
-  // put your setup code here, to run once:
+void setup()
+{
   Serial.begin(115200);
-  xTaskCreate(TaskLEDControl, "Led Control", 2048, NULL, 2, NULL);
-  xTaskCreate(TaskTemperature_Humidity, "Temperature Humidity Monitoring", 2048, NULL, 2, NULL);
-  
+  check_info_File(0);
+
+  xTaskCreate(led_blinky, "Task LED Blink", 2048, NULL, 2, NULL);
+  // xTaskCreate(neo_blinky, "Task NEO Blink", 2048, NULL, 2, NULL);
+  // xTaskCreate(temp_humi_monitor, "Task TEMP HUMI Monitor", 2048, NULL, 2, NULL);
+  // xTaskCreate(main_server_task, "Task Main Server" ,8192  ,NULL  ,2 , NULL);
+  // xTaskCreate( tiny_ml_task, "Tiny ML Task" ,2048  ,NULL  ,2 , NULL);
+  // xTaskCreate(coreiot_task, "CoreIOT Task" ,4096  ,NULL  ,2 , NULL);
+  // xTaskCreate(Task_Toogle_BOOT, "Task_Toogle_BOOT", 4096, NULL, 2, NULL);
 }
 
-void loop() {
-  
+void loop()
+{
+  // if (check_info_File(1))
+  // {
+  //   if (!Wifi_reconnect())
+  //   {
+  //     Webserver_stop();
+  //   }
+  //   else
+  //   {
+  //     //CORE_IOT_reconnect();
+  //   }
+  // }
+  // Webserver_reconnect();
 }
