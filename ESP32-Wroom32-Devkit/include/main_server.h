@@ -8,7 +8,7 @@
 
 #define LED1_PIN 48
 #define LED2_PIN 41
-#define BOOT_PIN 0
+#define BOOT_PIN GPIO_NUM_0
 
 String mainPage();
 String settingsPage();
