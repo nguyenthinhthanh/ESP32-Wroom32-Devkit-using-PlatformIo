@@ -5,6 +5,7 @@
 
 #include "main_server.h"
 #include "tiny_ml.h"
+#include "core_iot.h"
 
 void setup()
 {
