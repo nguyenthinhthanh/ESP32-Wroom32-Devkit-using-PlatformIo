@@ -2,7 +2,7 @@
 
 bool led1_state = false;
 bool led2_state = false;
-bool isAPMode = true;
+bool is_ap_mode = true;
 
 WebServer server(80);
 
@@ -277,8 +277,10 @@ String settingsPage()
   )rawliteral";
 }
 
-// ========== Handlers ==========
-void handleRoot() { server.send(200, "text/html", mainPage()); }
+void handleRoot()
+{ 
+  server.send(200, "text/html", mainPage()); 
+}
 
 void handleToggle()
 {
@@ -306,16 +308,21 @@ void handleSensors()
   server.send(200, "application/json", json);
 }
 
-void handleSettings() { server.send(200, "text/html", settingsPage()); }
+void handleSettings()
+{ 
+  server.send(200, "text/html", settingsPage()); 
+}
 
 void handleConnect()
 {
-  wifi_ssid = server.arg("ssid");
-  wifi_password = server.arg("pass");
+  WIFI_SSID = server.arg("ssid");
+  WIFI_PASSWORD = server.arg("pass");
   server.send(200, "text/plain", "Connecting....");
-  isAPMode = false;
+
+  is_ap_mode = false;
   connecting = true;
   connect_start_ms = millis();
+
   connectToWiFi();
 }
 
@@ -333,29 +340,31 @@ void setupServer()
 void startAP()
 {
   WiFi.mode(WIFI_AP);
-  WiFi.softAP(ssid.c_str(), password.c_str());
+  WiFi.softAP(AP_SSID.c_str(), AP_PASSWORD.c_str());
+
   Serial.print("AP IP address: ");
   Serial.println(WiFi.softAPIP());
-  isAPMode = true;
+
+  is_ap_mode = true;
   connecting = false;
 }
 
 void connectToWiFi()
 {
   WiFi.mode(WIFI_STA);
-  if (wifi_password.isEmpty())
+  if (WIFI_PASSWORD.isEmpty())
   {
-    WiFi.begin(wifi_ssid.c_str());
+    WiFi.begin(WIFI_SSID.c_str());
   }
   else
   {
-    WiFi.begin(wifi_ssid.c_str(), wifi_password.c_str());
+    WiFi.begin(WIFI_SSID.c_str(), WIFI_PASSWORD.c_str());
   }
   Serial.print("Connecting to: ");
-  Serial.print(wifi_ssid.c_str());
+  Serial.print(WIFI_SSID.c_str());
 
   Serial.print(" Password: ");
-  Serial.print(wifi_password.c_str());
+  Serial.print(WIFI_PASSWORD.c_str());
 }
 
 // ========== Main task ==========
@@ -376,7 +385,7 @@ void main_server_task(void *pvParameters)
       vTaskDelay(100);
       if (digitalRead(BOOT_PIN) == LOW)
       {
-        if (!isAPMode)
+        if (!is_ap_mode)
         {
           startAP();
           setupServer();
@@ -391,23 +400,28 @@ void main_server_task(void *pvParameters)
       {
         Serial.print("STA IP address: ");
         Serial.println(WiFi.localIP());
-        isWifiConnected = true; // Internet access
+
+        // Internet access
+        is_wifi_connected = true;
 
         xSemaphoreGive(xBinarySemaphoreInternet);
 
-        isAPMode = false;
+        is_ap_mode = false;
         connecting = false;
       }
       else if (millis() - connect_start_ms > 10000)
-      { // timeout 10s
+      {
+        // Timeout 10s
         Serial.println("WiFi connect failed! Back to AP.");
         startAP();
         setupServer();
+
         connecting = false;
-        isWifiConnected = false;
+        is_wifi_connected = false;
       }
     }
 
-    vTaskDelay(20); // avoid watchdog reset
+    // Avoid watchdog reset
+    vTaskDelay(20);
   }
 }

@@ -9,16 +9,15 @@
 extern float glob_temperature;
 extern float glob_humidity;
 
-extern String WIFI_SSID;
-extern String WIFI_PASS;
 extern String CORE_IOT_TOKEN;
 extern String CORE_IOT_SERVER;
 extern String CORE_IOT_PORT;
 
-extern String ssid;
-extern String password;
-extern String wifi_ssid;
-extern String wifi_password;
-extern boolean isWifiConnected;
+extern String AP_SSID;
+extern String AP_PASSWORD;
+extern String WIFI_SSID;
+extern String WIFI_PASSWORD;
+
+extern boolean is_wifi_connected;
 extern SemaphoreHandle_t xBinarySemaphoreInternet;
 #endif

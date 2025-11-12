@@ -4,9 +4,9 @@ void led_blinky(void *pvParameters){
   pinMode(LED_GPIO, OUTPUT);
   
   while(1) {                        
-    digitalWrite(LED_GPIO, HIGH);  // turn the LED ON
+    digitalWrite(LED_GPIO, HIGH);
     vTaskDelay(1000);
-    digitalWrite(LED_GPIO, LOW);  // turn the LED OFF
+    digitalWrite(LED_GPIO, LOW);
     vTaskDelay(1000);
   }
 }
