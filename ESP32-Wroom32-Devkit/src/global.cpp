@@ -11,5 +11,7 @@ String AP_PASSWORD = "12345678";
 String WIFI_SSID = "A18.02";
 String WIFI_PASSWORD = "18021802";
 
+bool is_ap_mode = true;
+bool is_connecting = false;
 boolean is_wifi_connected = false;
 SemaphoreHandle_t xBinarySemaphoreInternet = xSemaphoreCreateBinary();

@@ -18,6 +18,8 @@ extern String AP_PASSWORD;
 extern String WIFI_SSID;
 extern String WIFI_PASSWORD;
 
+extern bool is_ap_mode;
+extern bool is_connecting;
 extern boolean is_wifi_connected;
 extern SemaphoreHandle_t xBinarySemaphoreInternet;
 #endif

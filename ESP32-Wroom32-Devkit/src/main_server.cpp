@@ -2,12 +2,9 @@
 
 bool led1_state = false;
 bool led2_state = false;
-bool is_ap_mode = true;
 
 WebServer server(80);
-
 unsigned long connect_start_ms = 0;
-bool connecting = false;
 
 String mainPage()
 {
@@ -320,7 +317,7 @@ void handleConnect()
   server.send(200, "text/plain", "Connecting....");
 
   is_ap_mode = false;
-  connecting = true;
+  is_connecting = true;
   connect_start_ms = millis();
 
   connectToWiFi();
@@ -346,7 +343,7 @@ void startAP()
   Serial.println(WiFi.softAPIP());
 
   is_ap_mode = true;
-  connecting = false;
+  is_connecting = false;
 }
 
 void connectToWiFi()
@@ -394,7 +391,7 @@ void main_server_task(void *pvParameters)
     }
 
     // STA Mode
-    if (connecting)
+    if (is_connecting)
     {
       if (WiFi.status() == WL_CONNECTED)
       {
@@ -407,7 +404,7 @@ void main_server_task(void *pvParameters)
         xSemaphoreGive(xBinarySemaphoreInternet);
 
         is_ap_mode = false;
-        connecting = false;
+        is_connecting = false;
       }
       else if (millis() - connect_start_ms > 10000)
       {
@@ -416,7 +413,7 @@ void main_server_task(void *pvParameters)
         startAP();
         setupServer();
 
-        connecting = false;
+        is_connecting = false;
         is_wifi_connected = false;
       }
     }
