@@ -13,5 +13,10 @@ String WIFI_PASSWORD = "18021802";
 
 bool is_ap_mode = true;
 bool is_connecting = false;
-boolean is_wifi_connected = false;
+bool is_wifi_connected = false;
+
 SemaphoreHandle_t xBinarySemaphoreInternet = xSemaphoreCreateBinary();
+SemaphoreHandle_t xGlobMutex = xSemaphoreCreateMutex();
+SemaphoreHandle_t xApModeMutex = xSemaphoreCreateMutex();
+SemaphoreHandle_t xConnectingMutex = xSemaphoreCreateMutex();
+SemaphoreHandle_t xWifiConnectedMutex = xSemaphoreCreateMutex();

@@ -66,10 +66,9 @@ const Attribute_Request_Callback attribute_shared_request_callback(&processShare
 
 void initWiFi() {
   // Need semaphore here
-  while (is_wifi_connected == false) {
-    delay(500);
+  if (xSemaphoreTake(xBinarySemaphoreInternet, portMAX_DELAY) == pdTRUE) {
+    Serial.println("Connected to Wifi");
   }
-  Serial.println("Connected to Wifi");
 }
 
 const bool reconnectWifi() {
@@ -94,11 +93,14 @@ const bool reconnectWifi() {
         // Timeout 10s
         Serial.println("WiFi connect failed! Press BOOT to back AP");
 
-        // is_wifi_connected = false;
+        if (xSemaphoreTake(xWifiConnectedMutex, portMAX_DELAY) == pdTRUE) {
+          is_wifi_connected = false;
+          xSemaphoreGive(xWifiConnectedMutex);
+        }
         return false;
       }
     }
-    Serial.println("Connected to Wifi");
+
     return true;
   }
 }
@@ -173,8 +175,11 @@ void coreiot_task(void *pvParameters){
         float temperature = dht20.getTemperature();
         float humidity = dht20.getHumidity();
 
-        glob_temperature = temperature;
-        glob_humidity = humidity;
+        if (xSemaphoreTake(xGlobMutex, portMAX_DELAY) == pdTRUE) {
+          glob_temperature = temperature;
+          glob_humidity = humidity;
+          xSemaphoreGive(xGlobMutex);
+        }
 
         if (isnan(temperature) || isnan(humidity)) {
           Serial.println("Failed to read from DHT20 sensor!");

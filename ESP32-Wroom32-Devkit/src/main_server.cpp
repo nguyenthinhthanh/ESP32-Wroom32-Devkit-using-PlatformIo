@@ -8,8 +8,13 @@ unsigned long connect_start_ms = 0;
 
 String mainPage()
 {
-  float temperature = glob_temperature;
-  float humidity = glob_humidity;
+  float temperature = 0;
+  float humidity = 0;
+  if (xSemaphoreTake(xGlobMutex, portMAX_DELAY) == pdTRUE) {
+    temperature = glob_temperature;
+    humidity = glob_humidity;
+    xSemaphoreGive(xGlobMutex);
+  }
   String led1 = led1_state ? "ON" : "OFF";
   String led2 = led2_state ? "ON" : "OFF";
 
@@ -299,8 +304,13 @@ void handleToggle()
 
 void handleSensors()
 {
-  float t = glob_temperature;
-  float h = glob_humidity;
+  float t = 0;
+  float h = 0;
+  if (xSemaphoreTake(xGlobMutex, portMAX_DELAY) == pdTRUE) {
+    t = glob_temperature;
+    h = glob_humidity;
+    xSemaphoreGive(xGlobMutex);
+  }
   String json = "{\"temp\":" + String(t) + ",\"hum\":" + String(h) + "}";
   server.send(200, "application/json", json);
 }
@@ -316,8 +326,14 @@ void handleConnect()
   WIFI_PASSWORD = server.arg("pass");
   server.send(200, "text/plain", "Connecting....");
 
-  is_ap_mode = false;
-  is_connecting = true;
+  if (xSemaphoreTake(xApModeMutex, portMAX_DELAY) == pdTRUE) {
+    is_ap_mode = false;
+    xSemaphoreGive(xApModeMutex);
+  }
+  if (xSemaphoreTake(xConnectingMutex, portMAX_DELAY) == pdTRUE) {
+    is_connecting = true;
+    xSemaphoreGive(xConnectingMutex);
+  }
   connect_start_ms = millis();
 
   connectToWiFi();
@@ -342,8 +358,14 @@ void startAP()
   Serial.print("AP IP address: ");
   Serial.println(WiFi.softAPIP());
 
-  is_ap_mode = true;
-  is_connecting = false;
+  if (xSemaphoreTake(xApModeMutex, portMAX_DELAY) == pdTRUE) {
+    is_ap_mode = true;
+    xSemaphoreGive(xApModeMutex);
+  }
+  if (xSemaphoreTake(xConnectingMutex, portMAX_DELAY) == pdTRUE) {
+    is_connecting = false;
+    xSemaphoreGive(xConnectingMutex);
+  }
 }
 
 void connectToWiFi()
@@ -362,6 +384,7 @@ void connectToWiFi()
 
   Serial.print(" Password: ");
   Serial.print(WIFI_PASSWORD.c_str());
+  Serial.print("\n");
 }
 
 // ========== Main task ==========
@@ -382,7 +405,12 @@ void main_server_task(void *pvParameters)
       vTaskDelay(100);
       if (digitalRead(BOOT_PIN) == LOW)
       {
-        if (!is_ap_mode)
+        bool ap_mode;
+        if (xSemaphoreTake(xApModeMutex, portMAX_DELAY) == pdTRUE) {
+          ap_mode = is_ap_mode;
+          xSemaphoreGive(xApModeMutex);
+        }
+        if (!ap_mode)
         {
           startAP();
           setupServer();
@@ -390,8 +418,15 @@ void main_server_task(void *pvParameters)
       }
     }
 
+
     // STA Mode
-    if (is_connecting)
+    bool connecting;
+    if (xSemaphoreTake(xConnectingMutex, portMAX_DELAY) == pdTRUE) {
+      connecting = is_connecting;
+      xSemaphoreGive(xConnectingMutex);
+    }
+
+    if (connecting)
     {
       if (WiFi.status() == WL_CONNECTED)
       {
@@ -399,12 +434,21 @@ void main_server_task(void *pvParameters)
         Serial.println(WiFi.localIP());
 
         // Internet access
-        is_wifi_connected = true;
+        if (xSemaphoreTake(xWifiConnectedMutex, portMAX_DELAY) == pdTRUE) {
+          is_wifi_connected = true;
+          xSemaphoreGive(xWifiConnectedMutex);
+        }
 
         xSemaphoreGive(xBinarySemaphoreInternet);
 
-        is_ap_mode = false;
-        is_connecting = false;
+        if (xSemaphoreTake(xApModeMutex, portMAX_DELAY) == pdTRUE) {
+          is_ap_mode = false;
+          xSemaphoreGive(xApModeMutex);
+        }
+        if (xSemaphoreTake(xConnectingMutex, portMAX_DELAY) == pdTRUE) {
+          is_connecting = false;
+          xSemaphoreGive(xConnectingMutex);
+        }
       }
       else if (millis() - connect_start_ms > 10000)
       {
@@ -413,8 +457,14 @@ void main_server_task(void *pvParameters)
         startAP();
         setupServer();
 
-        is_connecting = false;
-        is_wifi_connected = false;
+        if (xSemaphoreTake(xConnectingMutex, portMAX_DELAY) == pdTRUE) {
+          is_connecting = false;
+          xSemaphoreGive(xConnectingMutex);
+        }
+        if (xSemaphoreTake(xWifiConnectedMutex, portMAX_DELAY) == pdTRUE) {
+          is_wifi_connected = false;
+          xSemaphoreGive(xWifiConnectedMutex);
+        }
       }
     }
 

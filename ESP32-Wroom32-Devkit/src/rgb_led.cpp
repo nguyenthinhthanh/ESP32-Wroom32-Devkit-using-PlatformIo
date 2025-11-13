@@ -19,18 +19,34 @@ void setRGB(uint8_t r, uint8_t g, uint8_t b) {
 void rgb_led_task(void *pvParameters){
   setupRGB();
   
-  while(1) {                        
-    if (is_ap_mode)
+  while(1) {     
+    bool ap_mode, connecting, wifi_connected;
+    if (xSemaphoreTake(xApModeMutex, portMAX_DELAY) == pdTRUE) {
+      ap_mode = is_ap_mode;
+      xSemaphoreGive(xApModeMutex);
+    }
+
+    if (xSemaphoreTake(xConnectingMutex, portMAX_DELAY) == pdTRUE) {
+      connecting = is_connecting;
+      xSemaphoreGive(xConnectingMutex);
+    }
+
+    if (xSemaphoreTake(xWifiConnectedMutex, portMAX_DELAY) == pdTRUE) {
+      wifi_connected = is_wifi_connected;
+      xSemaphoreGive(xWifiConnectedMutex);
+    }
+
+    if (ap_mode)
     {
         setRGB(0,0,255);
         vTaskDelay(1000);
     }
-    else if (is_connecting)
+    else if (connecting)
     {
         setRGB(255,0,0);
         vTaskDelay(100);
     }
-    else if (is_wifi_connected)
+    else if (wifi_connected)
     {
         setRGB(0,255,0);
     }
